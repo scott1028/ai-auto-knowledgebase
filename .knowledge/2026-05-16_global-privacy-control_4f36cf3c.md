@@ -2,221 +2,83 @@
 source_url: https://developer.mozilla.org/en-US/blog/global-privacy-control/
 source_hash: 4f36cf3c
 retrieved: 2026-05-16
-title: Implications of Global Privacy Control
+title: Global Privacy Control (GPC) 的意涵 (Implications of Global Privacy Control)
 ---
 
-# Implications of Global Privacy Control
+# Global Privacy Control (GPC) 的意涵
 
-## In this article
+> 原文發佈日期：2025-03-15,作者 Lola Odelola (W3C TAG 成員)。
 
+## 重點摘要
 
+**GPC (Global Privacy Control)** 是 W3C Privacy Working Group 推出的新草案,用一個 HTTP signal 讓使用者表達「不要販賣或分享我的個資」的偏好。和 2009 年失敗的 DNT (Do Not Track) 最大差別:GPC **有法律後盾** —— 加州 Attorney General 已建議遵守 GPC 以符合 CCPA,並計畫對接歐盟 GDPR。
 
+## 為何 GPC ≠ DNT
 
-- [Trust and data collection](#trust_and_data_collection)
-- [GPC and Do Not Track (DNT)](#gpc_and_do_not_track_dnt)
-- [How GPC may give more control to users](#how_gpc_may_give_more_control_to_users)
-- [What GPC looks like for website owners](#what_gpc_looks_like_for_website_owners)
-- [What to do when receiving a GPC signal](#what_to_do_when_receiving_a_gpc_signal)
-- [Trying GPC and browser support](#trying_gpc_and_browser_support)
-- [Summary](#summary)
+- DNT 雖被多數瀏覽器實作,但網站採用率極低 —— 因為沒有法律強制力,網站可選擇忽略。
+- GPC 不同:CCPA 規範下,接收到 GPC signal 等同收到「Do Not Sell」請求,網站若忽略可能有法律後果。
 
+## GPC 的兩種 signal
 
+兩者都叫 `do-not-sell-or-share`,差別在範圍 (scope):
 
+| 類型 | 範圍 | 例子 |
+|---|---|---|
+| **Interaction** | 單一網域 | 對 `https://nhs.uk` 關閉 (允許分享給藥房/保險);對 `https://tiktok.com` 開啟 (拒絕分享) |
+| **Preference** | 整個瀏覽器全域 | 設定 preference 等於開啟 Global Privacy Control |
 
+## 對網站擁有者的實作要求
 
+### 1. 公告支援狀態:`/.well-known/gpc.json`
 
-
-
- ![Implications of Global Privacy Control title.
-](./featured.png)
-
-
-
-
-# Implications of Global Privacy Control
-
-
-
- [Lola Odelola](https://bsky.app/profile/lolaodelola.bsky.social)
-
- March 15, 2025
-
-
- 5 minutes read
-
-
-
-
-
-
-
-
- Privacy has been a focal point for the World Wide Web Consortium (W3C) for the last few years, with their release of their [Privacy Principles](https://www.w3.org/TR/privacy-principles/) and browser vendors working on what host of tools should replace third-party cookies.
-It makes sense, then, that the [Global Privacy Control](https://globalprivacycontrol.org) (GPC) has gained traction and is on a standards track, with the Privacy Working Group having recently [published the first working draft](https://www.w3.org/TR/gpc/).
-This article takes a look at the draft, and how it will look for website owners and users who want to make use of GPC.
-
-
-
-
-## Trust and data collection
-
- According to the UK Government's Center for Ethics and Innovation, 57% of respondents agree that collecting [personal data "is useful for creating products and services that benefit them as individuals"](https://www.gov.uk/government/publications/public-attitudes-to-data-and-ai-tracker-survey).
-Only 46% of respondents trust that big tech companies will let them make decisions about how their data is used, and that number drops to 31% when referring to social media companies.
-
-We can interpret this to mean that most respondents distrust social media and big tech companies regarding decision-making and consent as it relates to their data.
-There's clearly a desire from users to have more control over how personal data is collected and shared, but striking a balance that's easy to control and enforce is delicate.
-
-
-
-
-## GPC and Do Not Track (DNT)
-
- This isn't the first time that a tracking prevention mechanism has reached the W3C and been implemented by browsers.
-In 2009 the [Do Not Track (DNT) header](/en-US/docs/Web/HTTP/Reference/Headers/DNT) was created as a way for web users to express their tracking preferences.
-While it was widely implemented in browsers, it had a low adoption rate with websites.
-
-The main problem with DNT was the lack of legal and regulatory backing it received.
-Website owners could decide if they'd observe the DNT signal and there were no legal repercussions if they chose not to.
-This is where GPC is different.
-
-At the time of writing, the Attorney General for California has recommended observation of GPC to comply with [CCPA](https://oag.ca.gov/privacy/ccpa).
-There are also intentions to work with the European Union's GDPR:
-
-The GPC signal will be intended to communicate a Do Not Sell request from a global privacy control, as per [CCPA-REGULATIONS §999.315](https://www.oag.ca.gov/sites/all/files/agweb/pdfs/privacy/oal-sub-final-text-of-regs.pdf) for that browser or device, or, if known, the consumer.
-Under the GDPR, the intent of the GPC signal is to convey a general request that data controllers limit the sale or sharing of the user's personal data to other da ta controllers ([GDPR Articles 7 & 21](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:32016R0679)).
-Over time, the GPC signal may be intended to communicate rights in other jurisdictions. – [globalprivacycontrol.org/#about](https://globalprivacycontrol.org/#about)
-
-The signal also has support from various browsers and extensions including Mozilla's Firefox, Brave and DuckDuckGo's Privacy Browser.
-
-GPC is different from other proposals being discussed and developed in that it gives power to the web user.
-Google is working on the [User-Agent Client Hints](https://wicg.github.io/ua-client-hints/) specification in the Web Platform Incubator Community Group, and [Bounce Tracking Mitigation](https://developers.google.com/privacy-sandbox/protections/bounce-tracking-mitigations) is on the Privacy Working Group's charter.
-While both proposals have their merits, neither gives the user a choice in the way that GPC does.
-
-
-
-
-## How GPC may give more control to users
-
- Web users want to have more autonomy over their data.
-They want to know who has it, where it's going and why, and they want to be able to consent to how their data moves between parties.
-GPC proposes two browser signals which can be set on all HTTP requests as headers.
-The two signals will be an interaction and a preference both called do-not-sell-or-share, which differ by scope.
-
-Interaction is set per domain, for example, a web user may want to allow the National Health Service `https://nhs.uk` to share their data with their pharmacy or health insurance, so they could switch the do-not-sell-or-share interaction for `https://nhs.uk` off.
-The same user may not want `https://tiktok.com` to share their data with anyone so they'd turn the interaction on for `https://tiktok.com`.
-
-The scope of the interaction is for a domain, and, the scope for the preference encompasses all interactions per browser.
-Setting a preference is setting a Global Privacy Control.
-
-
-
-
-## What GPC looks like for website owners
-
- It's a requirement to return the GPC support resource as a JSON object from a well-known URI (`/.well-known/gpc.json`) with these members:
-
-json
-```
+```json
 {
- "gpc": true,
- "lastUpdate": "1997-03-10"
+  "gpc": true,
+  "lastUpdate": "1997-03-10"
 }
-
 ```
 
-Which has this meaning:
+- `gpc`: `true` 表示伺服器承諾遵守 GPC 請求;`false` 表示不遵守;其他值代表狀態未知。
+- `lastUpdate`: 採用 `YYYY-MM-DD` 或 ISO 8601 date-time。
 
-[`gpc`](#gpc)
+### 2. 偵測 signal
 
-The value of the `gpc` is either `true` (the server intends to abide by GPC requests) or `false`, to indicate that it does not.
-For any other value the origin's support is unknown.
+伺服器端檢查 `Sec-GPC` header (Express 範例):
 
-[`lastUpdate`](#lastupdate)
-
-A full-date (`YYYY-MM-DD`) or date-time (`YYYY-MM-DDTHH:mm:ss.sssZ`) indicating the time at which the statement of support was made.
-Later changes to the meaning of the GPC standard should not affect the interpretation of the resource for legal purposes.
-
-For handling requests with a GPC signal, developers can implement a listener by checking for the [`Sec-GPC`](/en-US/docs/Web/HTTP/Reference/Headers/Sec-GPC) HTTP header in requests.
-An Express app might look like this:
-
-js
-```
-// Any route
+```js
 app.get("/", function (req, res) {
- // Check for a `Sec-GPC` header:
- const gpcValue = req.header("Sec-GPC");
- if (gpcValue === "1") {
- // Signal detected
- optOutUser(userId);
- }
+  const gpcValue = req.header("Sec-GPC");
+  if (gpcValue === "1") {
+    optOutUser(userId);
+  }
 });
-
 ```
 
-You can alternatively use the [`globalPrivacyControl`](/en-US/docs/Web/API/Navigator/globalPrivacyControl) property in the browser:
+瀏覽器端可用 `navigator.globalPrivacyControl`:
 
-js
-```
+```js
 const gpcValue = navigator.globalPrivacyControl;
 if (gpcValue) {
- // Signal detected
- optOutUser(userId);
+  optOutUser(userId);
 }
-
 ```
 
-The examples above uss a placeholder `optOutUser(userId)` for illustration, but the backend should call whatever logic is needed to satisfy the user's choice.
+帶有 GPC 的 HTTP request 會包含 header `Sec-GPC: 1`。
 
-The HTTP response would look something like this if the user has set GPC to "true":
+### 3. 收到 signal 後
 
-http
-```
-200 OK
-Access-Control-Allow-Origin: *
-Connection: Keep-Alive
-Content-Encoding: gzip
-Content-Type: text/html; charset=utf-8
-…
-Sec-GPC: 1
+由開發者/業務決定如何處理 —— 例如將該使用者從第三方追蹤、行銷流程中移除,流程類似一般的退出機制。CCPA 司法管轄下「必須」遵守。
 
-```
+## 瀏覽器與工具支援
 
+- **原生支援**:Firefox、Brave、DuckDuckGo Privacy Browser (最新版,可在設定中開啟)。
+- **擴充套件**:Microsoft Edge、Google Chrome 透過 GPC 擴充。
+- **Express 中介層**:`npm i express-gpc`。
 
+## 觀察
 
+GPC 在「企業聚焦於 private advertising」的氛圍中,屬於少數真正把選擇權還給使用者的規範。對開發者整合成本低,瀏覽器支援也在成長。
 
-## What to do when receiving a GPC signal
+## 個人筆記
 
- It's up to the developer/business to decide how to treat the signal, for example, removing the user's details from third-party tracking or marketing, following a similar procedure as to when users opt out of sharing data for marketing purposes.
-If in CCPA jurisdiction, the signal must be observed to avoid legal repercussions.
-
-
-
-
-## Trying GPC and browser support
-
- GPC is currently available in the latest versions of Firefox, Brave and DuckDuckGo's Privacy Browser and users can [turn the signal on in their settings (PDF)](https://globalprivacycontrol.org/GPC_for_Users.pdf).
-In addition to browser config, [GPC extensions](https://globalprivacycontrol.org/#download) are available for Microsoft Edge and Google Chrome.
-
-Developers can test GPC in Express apps using the [express-gpc middleware](https://www.npmjs.com/package/express-gpc), which you can to your project using `npm i express-gpc`.
-
-
-
-
-## Summary
-
- GPC is an exciting specification, in a sea of companies hyper-focussed on how to do private advertising, it's refreshing to have a specification that prioritizes the needs of the web user.
-With growing browser support and not much integration needed for developers, it's a step toward greater transparency and control for web users.
-
-[Lola Odelola](https://bsky.app/profile/lolaodelola.bsky.social) is a web standards technologist who works to make web standards accessible to developers. Lola sits on the W3C Technical Architecture Group and participates in various W3C groups as a W3C Invited Expert.
-
-
-
-
-
-
-
-
-
-
-## Previous post
- JavaScript Temporal is coming
+實務上若服務目標市場包含加州/歐盟,優先實作 `/.well-known/gpc.json` 與 `Sec-GPC` header 偵測;同時也代表既有的 cookie consent banner 與 GPC 處理流程需要對齊,避免兩邊邏輯衝突。
