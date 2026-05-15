@@ -204,3 +204,36 @@ git ls-remote origin HEAD                              # exit 0 = SSH + transpor
 `git ls-remote origin HEAD` is the canonical probe — it authenticates and reaches the remote, so a success here proves `git push` will work. Do NOT use `ssh -T git@github.com`: it has been observed to fail (`Permission denied (publickey)`) on environments — notably WSL — where the SSH agent forwards keys to real git operations but not to the bare `-T` test connection. A failed `ssh -T` is therefore NOT evidence that SSH is unusable.
 
 You may see harmless `kwalletd` / DBus error lines interleaved with successful git output on Linux/WSL, e.g. `Couldn't start kwalletd: QDBusError(...)`. These are credential-helper noise and do NOT indicate failure — only the git command's exit code and final output (`HEAD` ref hash for `ls-remote`, refspec range for `push`) determine success. Do not interpret these as auth errors.
+
+## Gmail draft output — title MUST include knowledge filename
+
+**Scope — applies only when THIS agent is the one creating the Gmail draft in the current turn.** This rule governs the agent's own output action: if the current task is "produce a Gmail draft" and the agent itself invokes the Gmail MCP / draft-creation tool, the rules below MUST be followed. The rule does NOT apply to:
+
+- Gmail drafts the user has already created by hand, or that pre-exist in the mailbox.
+- Drafts produced by other agents, scripts, or external automations — even if their bodies are derived from this knowledge base.
+- Any other output channel (commits, PR descriptions, chat replies, files written under `.knowledge/`, etc.) — those are governed by their own rules above.
+- Reading, summarising, or listing existing drafts — the rule constrains *creation*, not retrieval.
+
+In short: only when the current agent's action in this turn is "create a Gmail draft" does the title-formatting + dedup contract below kick in.
+
+When the output of a task is a **Gmail draft** (created via the Gmail MCP integration or any other "save as draft" path) whose body is derived from one or more knowledge files in `.knowledge/`, the draft's **subject line MUST end with the corresponding `.md` filename(s)**, following the `YYYY-MM-DD_knowledge-title_<sourcehash>.md` convention.
+
+Format — append the filename after a ` - ` separator at the END of the subject:
+
+```
+<human-readable subject> - <knowledge-filename>.md
+```
+
+Example:
+
+```
+MDN Frontend 重構知識總結 - 2026-05-15_h1-element-styles_5967f444.md
+```
+
+Rules:
+
+- **Single source**: append exactly one filename.
+- **Multiple sources**: append all filenames separated by `, ` (comma + space), still after the single ` - ` separator. Keep them in the same order they appear in the draft body.
+- The filename in the subject MUST exactly match the file under `.knowledge/` — same date prefix, same slug, same `<sourcehash>`. Do NOT abbreviate, translate, or strip the `.md` extension.
+- **Dedup check**: before creating a new Gmail draft, list existing drafts (or otherwise inspect previously-created drafts in this session) and grep their subjects for the `_<sourcehash>.md` suffix you are about to append. If a draft with the same `<sourcehash>` filename already exists, SKIP creation — do not produce a duplicate draft. Surface the skip to the user the same way URL dedup skips are reported (one line: existing draft subject + the filename that triggered the match).
+- This rule applies only to Gmail drafts. Other output channels (commits, PR descriptions, chat replies) are unaffected.
