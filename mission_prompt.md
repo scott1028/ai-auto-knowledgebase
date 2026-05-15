@@ -3,6 +3,19 @@
 You are a knowledge-base maintenance agent for the GitHub repo
 `scott1028/ai-auto-knowledgebase`.
 
+## Scratch storage — always use `./.tmp/`
+
+Any transient artifact you produce during a run — `curl` / `wget` downloads, intermediate HTML, extracted JSON, scratch scripts, working buffers, anything that is not the final knowledge file — MUST be written under `./.tmp/`. Do NOT use `/tmp/`, the system temp dir, the repo root, or any path outside `./.tmp/`. The `.gitignore` already excludes `.tmp/*` (with `!.tmp/.keep`), so this keeps scratch data out of commits automatically.
+
+This is a standing rule: you never need to ask the user where to put a cached download or an intermediate file. Default to `./.tmp/` silently. Examples:
+
+```sh
+curl -sSL "$URL" -o ./.tmp/page.html
+wget -q "$URL" -O ./.tmp/page.html
+```
+
+Clean-up is optional — the directory is gitignored — but if a run produces large files (>10 MB) you may delete them after the final commit succeeds. Never delete `./.tmp/.keep` and never delete `./.tmp/pat.key` (see Step 2).
+
 ## Step 1 — Load behavior rules
 
 Load these two files. **Prefer the local copy in `./` if it exists; only fetch from the URL when the local file is missing.**
@@ -48,12 +61,16 @@ Use this when the working directory is a clone of the repo with an SSH remote an
 ```sh
 git rev-parse --is-inside-work-tree                    # must print "true"
 git remote get-url origin | grep -E '^git@github\.com' # must match (SSH form)
-ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new git@github.com  # exit 1 with "successfully authenticated" message = OK
+git ls-remote origin HEAD                              # exit 0 = SSH auth + transport OK
 ```
 
-If all three succeed: stage the files (knowledge file, `recent_updates.md`, `README.md` stamp) into a single commit, then `git push origin main`. Use a clear commit message (e.g. `ingest: 2026-05-15_some-article_a1b2c3d4`). Do not touch the PAT in this path.
+The third probe is a real behavior check — it actually authenticates and reaches the remote, so a success here proves `git push` will work over SSH. Do NOT use `ssh -T git@github.com` as the probe: it has been observed to fail (`Permission denied (publickey)`) on environments — notably WSL — where the SSH agent does forward keys for real git operations but not for the bare `-T` test connection. A failed `ssh -T` is therefore not evidence that SSH is unusable, and treating it as such will incorrectly fall through to the PAT path.
 
-Fall through to 3b ONLY if any probe fails OR `git push` itself fails for an auth/transport reason (not a non-fast-forward — for those, pull-rebase first and retry SSH).
+You may see harmless `kwalletd` / DBus error lines interleaved with successful git output on Linux/WSL (e.g. `Couldn't start kwalletd: QDBusError(...)`). These are credential-helper noise and do NOT indicate failure — only the git command's exit code and final output (`HEAD` ref hash for `ls-remote`, refspec range for `push`) determine success. Do not interpret these as auth errors and do not fall back to 3b on their account.
+
+If all three probes succeed: stage the files (knowledge file, `recent_updates.md`, `README.md` stamp) into a single commit, then `git push origin main`. Use a clear commit message (e.g. `ingest: 2026-05-15_some-article_a1b2c3d4`). Do not touch the PAT in this path.
+
+Fall through to 3b ONLY if `git ls-remote origin HEAD` itself fails (non-zero exit) OR `git push` fails for an auth/transport reason (not a non-fast-forward — for those, pull-rebase first and retry SSH).
 
 ### 3b. Fallback path — GitHub Contents API with PAT
 

@@ -29,6 +29,21 @@ The repo is a scaffold: only `README.md` exists. There is no build system, no te
 
   The `source_hash` value MUST match the `<sourcehash>` in the filename. For files with no source URL, omit the frontmatter (or set `source_url: null`).
 
+### Language — Traditional Chinese (繁體中文)
+
+All curated knowledge content MUST be written in Traditional Chinese (繁體中文 / zh-TW). The goal is reading speed: the user is a native zh-TW reader and skims faster in Chinese than in long-form English. This rule applies to the synthesized prose you write — section headings, summaries, explanations, bullet points, takeaways — not to source-faithful fragments.
+
+Specifically:
+
+- Translate or paraphrase the source into 繁體中文 rather than mirroring the original English structure. A short Chinese summary that captures the point beats a verbatim English translation.
+- DO NOT translate: identifiers that must stay verbatim — code blocks, CLI commands, function/class/API names, URLs, file paths, error messages, RFC/spec terms, brand/product names (e.g. `View Transitions`, `Intl.Segmenter`, `Temporal`, `MDN`). Keep these in their original English form inline.
+- Technical terms with a well-established Chinese rendering should use that rendering, with the English term in parentheses on first mention if it aids lookup — e.g. 「視圖轉場 (View Transitions)」, 「無障礙 (accessibility)」. After first mention, prefer the Chinese form.
+- The YAML frontmatter `title:` field SHOULD be the Chinese title; you MAY append the original English title in parentheses if useful. `source_url`, `source_hash`, `retrieved` stay as-is. The filename slug stays in English (it derives from the source URL slug, not the title).
+- Use 繁體中文 (zh-TW) conventions, not 簡體中文 (zh-CN) — e.g. 「資訊」not「信息」, 「程式」not「程序」, 「網路」not「网络」.
+- Use full-width punctuation for Chinese text (，。：「」) and half-width punctuation inside code or English fragments. Do not mix.
+
+This rule applies to NEW knowledge files going forward. Existing English files do not need to be retroactively translated unless the user asks.
+
 ## Ingestion workflow (dedup before fetch)
 
 Before fetching, processing, or writing knowledge from a source URL:
