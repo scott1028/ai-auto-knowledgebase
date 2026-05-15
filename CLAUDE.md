@@ -44,6 +44,35 @@ Specifically:
 
 This rule applies to NEW knowledge files going forward. Existing English files do not need to be retroactively translated unless the user asks.
 
+### Diagrams — ASCII only
+
+When a diagram helps human comprehension (flowcharts, architecture diagrams, sequence diagrams, state machines, layouts, hierarchies, etc.), draw it as **ASCII art inside a fenced code block**. Output files are plain Markdown (`.md`) consumed by humans reading the file directly — Mermaid, PlantUML, or other diagram DSLs do NOT render in this context and just appear as confusing source code. ASCII renders predictably everywhere (GitHub, VS Code preview, terminal, plain text).
+
+Rules:
+
+- Wrap the diagram in a fenced code block — use a plain ```` ``` ```` fence (no language tag) or ```` ```text ```` so monospace alignment is preserved.
+- Use a monospace-friendly box-drawing vocabulary. Pick ONE style per diagram and stay consistent:
+  - ASCII only: `+`, `-`, `|`, `>`, `<`, `^`, `v` for boxes and arrows. Maximum portability.
+  - Unicode box-drawing (`─ │ ┌ ┐ └ ┘ ├ ┤ ┬ ┴ ┼ → ← ↑ ↓`) is also OK and often clearer. Don't mix the two styles within one diagram.
+- Keep the diagram narrow enough to read without horizontal scroll — aim for ≤80 columns. If it grows beyond that, split it into multiple smaller diagrams or simplify.
+- Label every box and arrow. An unlabelled diagram is rarely worth the screen space.
+- Prefer prose for anything a 3-box diagram can't convey — diagrams should clarify, not pad. If you can say it in one sentence, do that instead.
+- Do NOT use Mermaid (```` ```mermaid ````), PlantUML, Graphviz, or other rendered-diagram DSLs. They don't render in raw Markdown viewers and degrade to unreadable source.
+
+Example:
+
+```
++----------+    fetch    +-----------+    parse    +-----------+
+|  source  | ----------> |  fetcher  | ----------> |  encoder  |
+|   URL    |             |  (curl)   |             |  (codec)  |
++----------+             +-----------+             +-----------+
+                                                         |
+                                                         v
+                                                   +-----------+
+                                                   | .knowledge|
+                                                   +-----------+
+```
+
 ## Ingestion workflow (dedup before fetch)
 
 Before fetching, processing, or writing knowledge from a source URL:
