@@ -12,7 +12,7 @@ Fetch the following three files first. They are the authoritative
 source of every rule, workflow, and source list this run must
 obey:
 
-1. `https://raw.githubusercontent.com/scott1028/ai-auto-knowledgebase/refs/heads/main/README.md`
+1. `https://raw.githubusercontent.com/scott1028/ai-auto-knowledgebase/refs/heads/main/CLAUDE.md`
 2. `https://raw.githubusercontent.com/scott1028/ai-auto-knowledgebase/refs/heads/main/mission_prompt.md`
 3. `https://raw.githubusercontent.com/scott1028/ai-auto-knowledgebase/refs/heads/main/knowledge_website.md`
 
