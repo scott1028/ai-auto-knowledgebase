@@ -216,7 +216,7 @@ You may see harmless `kwalletd` / DBus error lines interleaved with successful g
 
 In short: only when the current agent's action in this turn is "create a Gmail draft" does the title-formatting + dedup contract below kick in.
 
-When the output of a task is a **Gmail draft** (created via the Gmail MCP integration or any other "save as draft" path) whose body is derived from one or more knowledge files in `.knowledge/`, the draft's **subject line MUST end with the corresponding `.md` filename(s)**, following the `YYYY-MM-DD_knowledge-title_<sourcehash>.md` convention.
+When the output of a task is a **Gmail draft** (created via the Gmail MCP integration or any other "save as draft" path) whose body is derived from a knowledge file in `.knowledge/`, the draft's **subject line MUST end with the corresponding `.md` filename**, following the `YYYY-MM-DD_knowledge-title_<sourcehash>.md` convention.
 
 Format — append the filename after a ` - ` separator at the END of the subject:
 
@@ -232,8 +232,7 @@ MDN Frontend 重構知識總結 - 2026-05-15_h1-element-styles_5967f444.md
 
 Rules:
 
-- **Single source**: append exactly one filename.
-- **Multiple sources**: append all filenames separated by `, ` (comma + space), still after the single ` - ` separator. Keep them in the same order they appear in the draft body.
-- The filename in the subject MUST exactly match the file under `.knowledge/` — same date prefix, same slug, same `<sourcehash>`. Do NOT abbreviate, translate, or strip the `.md` extension.
-- **Dedup check**: before creating a new Gmail draft, list existing drafts (or otherwise inspect previously-created drafts in this session) and grep their subjects for the `_<sourcehash>.md` suffix you are about to append. If a draft with the same `<sourcehash>` filename already exists, SKIP creation — do not produce a duplicate draft. Surface the skip to the user the same way URL dedup skips are reported (one line: existing draft subject + the filename that triggered the match).
+- **One draft per knowledge file — strict 1:1 mapping.** Each `.knowledge/*.md` file MUST map to exactly one Gmail draft (one email). **NEVER** bundle multiple knowledge files into a single draft — doing so makes the subject-line filename suffix ambiguous and breaks both the title-format contract and the dedup check below. If the current turn produces N new knowledge files, the agent MUST create N separate drafts, one per file, each with its own subject line ending in that file's filename. There is no "combined digest" or "multi-source roundup" form of this draft — the subject line carries exactly one `_<sourcehash>.md` suffix, always.
+- **Subject contains exactly one filename.** Append exactly one filename per draft. Do NOT comma-separate multiple filenames into one subject. Do NOT translate, abbreviate, or strip the `.md` extension. The filename MUST exactly match the file under `.knowledge/` — same date prefix, same slug, same `<sourcehash>`.
+- **Dedup check**: before creating a new Gmail draft, list existing drafts (or otherwise inspect previously-created drafts in this session) and grep their subjects for the `_<sourcehash>.md` suffix you are about to append. If a draft with the same `<sourcehash>` filename already exists, SKIP creation for that file — do not produce a duplicate draft. Surface the skip to the user the same way URL dedup skips are reported (one line: existing draft subject + the filename that triggered the match). Dedup is performed per-file; skipping one does not affect the others in the same batch.
 - This rule applies only to Gmail drafts. Other output channels (commits, PR descriptions, chat replies) are unaffected.
