@@ -112,24 +112,48 @@ Before fetching, processing, or writing knowledge from a source URL:
 
 When processing multiple URLs in one turn, perform the dedup check for every URL up front, then at the end of the response include a short message listing every URL that was skipped and which existing file it matched. Do not omit this notice — the user relies on it to know what was reused vs newly fetched.
 
-## Recent updates index (`./recent_updates.md`)
+## Topic-relevance filter — IT/tech only
 
-`./recent_updates.md` (at repo root, NOT inside `.knowledge/`) is a fast-lookup index of every knowledge file added in the last 30 days. It exists so dedup checks can scan one small file instead of the whole `.knowledge/` directory.
+This knowledge base is scoped to **IT / software / web technology**. Before fetching a candidate URL (after dedup, before the actual write), determine whether the source is on-topic:
 
-Format — one filename per line, newest first, no other content:
+- **In scope:** software engineering, programming languages, web platform (HTML/CSS/JS/APIs), browsers, infrastructure, DevOps, databases, security, ML/AI engineering, developer tools, hardware/firmware, technical standards (RFCs, W3C specs), tech industry incidents with engineering relevance (outages, vulnerabilities), tech-product engineering deep-dives.
+- **Out of scope:** general news, business/finance (unless engineering-focused), politics, sports, entertainment, lifestyle, celebrity/personality coverage, generic product announcements with no engineering content, opinion pieces with no technical substance.
+
+If a URL is **out of scope**, do NOT fetch it and do NOT write a file to `.knowledge/`. Instead, record the rejection in `recent_updates.md` using a **skip marker entry**:
 
 ```
-2026-05-15_repo-bootstrap_a1b2c3d4.md
-2026-05-14_some-article_ef567890.md
+YYYY-MM-DD_skipped_<sourcehash>.md
+```
+
+- The `YYYY-MM-DD` is today's date (same convention as real entries).
+- The literal string `skipped` replaces the title slug.
+- The `<sourcehash>` is the normal 8-hex SHA-256 of the source URL.
+- **No file is created under `.knowledge/`.** The marker exists only as a line in `recent_updates.md`.
+
+The skip marker exists so future runs short-circuit at the `recent_updates.md` grep step (same fast path as a real dedup hit) — without it, the same off-topic URL would be re-evaluated every time it appears in a feed. The 30-day FIFO pruning rule applies to skip markers exactly like real entries; after 30 days an off-topic URL may be re-evaluated, which is acceptable.
+
+When reporting at end of turn (Step 4 in `mission_prompt.md`), list off-topic skips separately from dedup skips, with a one-line reason per URL (e.g. "sports news", "general politics", "celebrity gossip"). Do not embed the reason in `recent_updates.md` itself — keep the index format strict.
+
+## Recent updates index (`./recent_updates.md`)
+
+`./recent_updates.md` (at repo root, NOT inside `.knowledge/`) is a fast-lookup index of every knowledge file added — **and every off-topic skip marker recorded** — in the last 30 days. It exists so dedup checks can scan one small file instead of the whole `.knowledge/` directory.
+
+Format — one filename per line, newest first, no other content. Two entry shapes are valid:
+
+```
+2026-05-15_repo-bootstrap_a1b2c3d4.md          # real knowledge file (exists in .knowledge/)
+2026-05-15_skipped_ef567890.md                 # off-topic skip marker (NO file in .knowledge/)
+2026-05-14_some-article_12345678.md
 ...
 ```
 
 Maintenance rules:
 
-1. **Dedup fast path:** before the filesystem check in step 2 of the ingestion workflow, grep `recent_updates.md` for `_<sourcehash>.md`. A hit there is authoritative — skip immediately. A miss does NOT prove absence (the file may be older than 30 days), so still fall back to the `.knowledge/*_<sourcehash>.md` check.
+1. **Dedup fast path:** before the filesystem check in step 2 of the ingestion workflow, grep `recent_updates.md` for `_<sourcehash>.md`. A hit there is authoritative — skip immediately. This catches both real entries AND skip markers, which is the point: an off-topic URL stays skipped without re-evaluation. A miss does NOT prove absence (the file may be older than 30 days), so still fall back to the `.knowledge/*_<sourcehash>.md` check (which only finds real entries).
 2. **After writing a new knowledge file:** prepend its filename to `recent_updates.md`.
-3. **Pruning (FIFO):** when updating the index, walk entries from the bottom (oldest) upward and drop them one-by-one as long as their `YYYY-MM-DD` prefix is older than 30 days from today. Stop at the first entry within the 30-day window — because the list is kept newest-first, everything above is guaranteed to be in-window. Compare dates lexicographically; the ISO format makes this safe.
-4. Do not edit `recent_updates.md` for any other reason. Do not add comments, headers, or blank lines.
+3. **After deciding a URL is off-topic** (see "Topic-relevance filter"): prepend `YYYY-MM-DD_skipped_<sourcehash>.md` to `recent_updates.md`. Do NOT create any file under `.knowledge/` for this entry.
+4. **Pruning (FIFO):** when updating the index, walk entries from the bottom (oldest) upward and drop them one-by-one as long as their `YYYY-MM-DD` prefix is older than 30 days from today. Stop at the first entry within the 30-day window — because the list is kept newest-first, everything above is guaranteed to be in-window. Compare dates lexicographically; the ISO format makes this safe. This rule applies uniformly to real entries and skip markers.
+5. Do not edit `recent_updates.md` for any other reason. Do not add comments, headers, or blank lines. Do not include the off-topic reason here (the report at end of turn is where that lives).
 
 ## README "Last Updated" stamp
 
