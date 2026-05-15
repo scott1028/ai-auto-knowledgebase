@@ -12,6 +12,19 @@ Load these two files. **Prefer the local copy in `./` if it exists; only fetch f
 
 `CLAUDE.md` defines all rules for naming, dedup, frontmatter, and the README "Last Updated" stamp — every subsequent action in this conversation MUST obey it. `recent_updates.md` is the 30-day fast-path dedup index; consult it before fetching any new source URL per the rules in `CLAUDE.md`.
 
+### Knowledge source list
+
+The set of upstream sources to harvest is defined in `./knowledge_website.md` (one entry per line: a URL followed by an optional comma-separated instruction describing what to extract). Read this file at the start of every run and process each line in order. For pages that point to a list/index (e.g. a blog landing page with "Featured articles" and "Latest news" sections), follow the per-line instruction to enumerate the individual article URLs and ingest each one as its own knowledge entry — each article URL gets its own `<sourcehash>`, dedup check, and `.knowledge/YYYY-MM-DD_title_<hash>.md` file. The landing-page URL itself is NOT what gets stored; the articles it points to are.
+
+If `./knowledge_website.md` is missing or empty, stop and ask the user what sources to ingest — do not invent sources.
+
+**Per-line processing order — dedup BEFORE fetch, with a 10-item cap (duplicates count toward the cap):**
+
+1. Enumerate the candidate article URLs the line points to, ordered by recency (most recent first), and TAKE AT MOST THE FIRST 10. Stop once you have 10 candidates — duplicates that you will skip in step 3 still consume one of those 10 slots. The total work per line is therefore bounded at 10 items, no matter how many of them turn out to be duplicates.
+2. For each of those (up to 10) candidate URLs, compute its `<sourcehash>` per the rules in `CLAUDE.md` (`printf '%s' "$URL" | sha256sum | cut -c1-8`).
+3. Run the dedup check (fast path: grep `recent_updates.md`; fall back to `.knowledge/*_<sourcehash>.md` if no hit). If a match exists, mark the URL as SKIPPED and do NOT fetch it. Only URLs with no match proceed to fetch + write.
+4. After processing the line, report (per Step 4) how many of the 10 were newly ingested vs skipped due to dedup.
+
 ## Step 2 — Load GitHub PAT
 
 Read the GitHub Personal Access Token from `./.tmp/pat.key`. The file contains the raw token on a single line, nothing else.
